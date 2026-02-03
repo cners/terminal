@@ -7,8 +7,9 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-let mainWindow = null;
-let ptyProcess = null;
+const windows = new Map();
+const ptys = new Map();
+const windowThemes = new Map();
 
 /** 从 argv 解析用户传入的 --key value 参数（Electron 会追加很多参数，我们只取 --title/--bg/--fg） */
 function parseArgv(argv) {
@@ -74,19 +75,8 @@ function getPtyEnv() {
   return base;
 }
 
-function applyArgs(argv) {
+function createWindow(argv) {
   const { baseTitle, userTitle, bg, fg } = parseArgv(argv);
-  const title = buildWindowTitle(baseTitle, userTitle);
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.setTitle(title);
-    mainWindow.setBackgroundColor(bg);
-    mainWindow.webContents.send('terminal-theme', { bg, fg, baseTitle, userTitle, title });
-  }
-  return { baseTitle, userTitle, bg, fg };
-}
-
-function createWindow() {
-  const { baseTitle, userTitle, bg, fg } = parseArgv();
   const title = buildWindowTitle(baseTitle, userTitle);
   const isMac = process.platform === 'darwin';
 
@@ -112,37 +102,44 @@ function createWindow() {
     windowOpts.trafficLightPosition = { x: 14, y: 12 };
   }
 
-  mainWindow = new BrowserWindow(windowOpts);
+  const win = new BrowserWindow(windowOpts);
+  windows.set(win.id, win);
+  windowThemes.set(win.id, { baseTitle, userTitle, bg, fg });
 
-  mainWindow.on('focus', () => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
-    mainWindow.webContents.send('window-active', true);
+  win.on('focus', () => {
+    if (win.isDestroyed()) return;
+    win.webContents.send('window-active', true);
   });
 
-  mainWindow.on('blur', () => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
-    mainWindow.webContents.send('window-active', false);
+  win.on('blur', () => {
+    if (win.isDestroyed()) return;
+    win.webContents.send('window-active', false);
   });
 
-  mainWindow.setTitle(title);
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  win.setTitle(title);
+  win.loadFile(path.join(__dirname, 'index.html'));
 
-  mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.webContents.send('terminal-theme', { bg, fg, baseTitle, userTitle, title });
-    mainWindow.webContents.send('window-active', mainWindow.isFocused());
-    setTimeout(() => spawnPty(), 150);
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.send('terminal-theme', { bg, fg, baseTitle, userTitle, title });
+    win.webContents.send('window-active', win.isFocused());
+    setTimeout(() => spawnPty(win), 150);
   });
 
-  mainWindow.on('closed', () => {
-    if (ptyProcess) {
-      ptyProcess.kill();
-      ptyProcess = null;
+  win.on('closed', () => {
+    const pty = ptys.get(win.id);
+    if (pty) {
+      pty.kill();
+      ptys.delete(win.id);
     }
-    mainWindow = null;
+    windowThemes.delete(win.id);
+    windows.delete(win.id);
   });
+
+  return win;
 }
 
-function spawnPty() {
+function spawnPty(win) {
+  if (!win || win.isDestroyed()) return;
   const pty = require('node-pty');
   const cols = 80;
   const rows = 24;
@@ -150,6 +147,7 @@ function spawnPty() {
   const env = getPtyEnv();
   const shells = [getShell(), '/bin/bash', '/bin/sh'].filter((p, i, a) => a.indexOf(p) === i);
 
+  let ptyProcess = null;
   for (const shell of shells) {
     try {
       ptyProcess = pty.spawn(shell, ['-i'], {
@@ -164,26 +162,27 @@ function spawnPty() {
       ptyProcess = null;
       if (shell === shells[shells.length - 1]) {
         const msg = `PTY 启动失败: ${err.message}\n\n请从终端启动: pnpm start -- --title "Dev" --bg "#1a1a2e"`;
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('terminal-data', '\r\n\x1b[31m' + msg + '\x1b[0m\r\n');
+        if (!win.isDestroyed()) {
+          win.webContents.send('terminal-data', '\r\n\x1b[31m' + msg + '\x1b[0m\r\n');
         }
         return;
       }
     }
   }
   if (!ptyProcess) return;
+  ptys.set(win.id, ptyProcess);
 
   ptyProcess.onData((data) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('terminal-data', data);
+    if (!win.isDestroyed()) {
+      win.webContents.send('terminal-data', data);
     }
   });
 
   ptyProcess.onExit(({ exitCode }) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('terminal-exit', exitCode);
+    if (!win.isDestroyed()) {
+      win.webContents.send('terminal-exit', exitCode);
     }
-    ptyProcess = null;
+    ptys.delete(win.id);
   });
 }
 
@@ -195,16 +194,13 @@ if (!gotLock) {
   app.quit();
 } else {
   app.on('second-instance', (_, argv) => {
-    if (!mainWindow || mainWindow.isDestroyed()) {
-      createWindow();
-    } else {
-      applyArgs(argv);
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
-      mainWindow.focus();
-    }
+    const win = createWindow(argv);
+    if (!win) return;
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
   });
-  app.whenReady().then(createWindow);
+  app.whenReady().then(() => createWindow());
 }
 
 app.on('window-all-closed', () => app.quit());
@@ -212,20 +208,30 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-// 单实例时，再次用 open -a 带参数打开，可考虑打开新窗口并传参；这里保持简单，只处理首次启动参数
-// 若需多窗口，可监听 second-instance 并解析 argv 再 createWindow
+// 单实例锁下，second-instance 用于开新窗口并解析 argv 传参
 
 // --------------- IPC ---------------
 ipcMain.on('terminal-input', (_, data) => {
-  if (ptyProcess) ptyProcess.write(data);
+  const win = BrowserWindow.fromWebContents(_.sender);
+  if (!win) return;
+  const pty = ptys.get(win.id);
+  if (pty) pty.write(data);
 });
 
 ipcMain.on('terminal-resize', (_, { cols, rows }) => {
-  if (ptyProcess) ptyProcess.resize(cols, rows);
+  const win = BrowserWindow.fromWebContents(_.sender);
+  if (!win) return;
+  const pty = ptys.get(win.id);
+  if (pty) pty.resize(cols, rows);
 });
 
 ipcMain.on('terminal-set-title', (_, title) => {
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(title);
+  const win = BrowserWindow.fromWebContents(_.sender);
+  if (win && !win.isDestroyed()) win.setTitle(title);
 });
 
-ipcMain.handle('terminal-get-theme', () => parseArgv());
+ipcMain.handle('terminal-get-theme', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win) return parseArgv();
+  return windowThemes.get(win.id) || parseArgv();
+});
