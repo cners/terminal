@@ -69,6 +69,56 @@ function initTitlebarControls() {
   });
 }
 
+function initDraftPanel() {
+  const btn = document.getElementById('titlebar-draft-btn');
+  const panel = document.getElementById('draft-panel');
+  const closeBtn = document.getElementById('draft-close-btn');
+  const copyBtn = document.getElementById('draft-copy-btn');
+  const textarea = document.getElementById('draft-textarea');
+  if (!btn || !panel || !closeBtn || !copyBtn || !textarea) return;
+  const root = document.documentElement;
+
+  const updatePanelHeight = () => {
+    const open = document.body.classList.contains('draft-open');
+    const height = open ? Math.round(panel.getBoundingClientRect().height) : 0;
+    root.style.setProperty('--draft-panel-h', `${height}px`);
+  };
+  const ro = new ResizeObserver(updatePanelHeight);
+  ro.observe(panel);
+
+  const openPanel = () => {
+    document.body.classList.add('draft-open');
+    requestAnimationFrame(() => {
+      updatePanelHeight();
+      textarea.focus();
+    });
+  };
+  const closePanel = () => {
+    document.body.classList.remove('draft-open');
+    updatePanelHeight();
+  };
+  const togglePanel = () => {
+    if (document.body.classList.contains('draft-open')) closePanel();
+    else openPanel();
+  };
+
+  btn.addEventListener('click', togglePanel);
+  closeBtn.addEventListener('click', closePanel);
+  copyBtn.addEventListener('click', async () => {
+    const text = textarea.value || '';
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (_) {
+      textarea.select();
+      document.execCommand('copy');
+      textarea.setSelectionRange(text.length, text.length);
+    }
+  });
+
+  updatePanelHeight();
+}
+
 const container = document.getElementById('terminal-container');
 container.textContent = ''; // 清掉「加载中…」
 
@@ -110,6 +160,7 @@ try {
   });
 
   initTitlebarControls();
+  initDraftPanel();
 
   window.terminal.onWindowActive?.((active) => {
     document.body.classList.toggle('window-inactive', !active);
