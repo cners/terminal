@@ -15,6 +15,9 @@ const terminalAPI = {
   onTheme: (cb) => {
     ipcRenderer.on('terminal-theme', (_, theme) => cb(theme));
   },
+  onWindowActive: (cb) => {
+    ipcRenderer.on('window-active', (_, active) => cb(active));
+  },
   sendInput: (data) => ipcRenderer.send('terminal-input', data),
   sendResize: (cols, rows) => ipcRenderer.send('terminal-resize', { cols, rows }),
   setTitle: (title) => ipcRenderer.send('terminal-set-title', title),
@@ -88,6 +91,10 @@ function initTerminal() {
         background: theme.bg,
         foreground: theme.fg,
       };
+    });
+
+    window.terminal.onWindowActive?.((active) => {
+      document.body.classList.toggle('window-inactive', !active);
     });
 
     window.terminal.getTheme?.().then((theme) => {

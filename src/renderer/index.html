@@ -8,10 +8,11 @@
   <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
   <style>
     * { box-sizing: border-box; }
-    :root { --term-bg: #1e1e1e; }
+    :root { --term-bg: #1e1e1e; --titlebar-h: 32px; }
     html, body { margin: 0; height: 100%; overflow: hidden; background: var(--term-bg); }
+    body.window-inactive { --titlebar-h: 48px; }
     #titlebar {
-      height: 32px;
+      height: var(--titlebar-h);
       background: var(--term-bg);
       -webkit-app-region: drag;
       display: flex;
@@ -29,7 +30,6 @@
       align-items: center;
       height: 100%;
       line-height: 1;
-      transform: translateY(3px);
       pointer-events: none;
       white-space: nowrap;
       overflow: hidden;
@@ -39,11 +39,17 @@
     #titlebar-title-suffix {
       color: #8ad1ff;
       margin-left: 6px;
+      display: inline-block;
+      transform-origin: left center;
+      transition: font-size 160ms ease;
     }
     #titlebar-title-suffix:empty {
       margin-left: 0;
     }
-    #terminal-container { width: 100%; height: calc(100% - 32px); padding: 8px; }
+    .window-inactive #titlebar-title-suffix {
+      font-size: 36px;
+    }
+    #terminal-container { width: 100%; height: calc(100% - var(--titlebar-h)); padding: 8px; }
   </style>
 </head>
 <body>

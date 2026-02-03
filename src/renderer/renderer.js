@@ -72,6 +72,10 @@ try {
     };
   });
 
+  window.terminal.onWindowActive?.((active) => {
+    document.body.classList.toggle('window-inactive', !active);
+  });
+
   // 若先收到 theme 再打开，上面已处理；getTheme 用于异步拿到后备
   window.terminal.getTheme?.().then((theme) => {
     if (theme && (theme.bg || theme.fg)) {

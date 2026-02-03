@@ -114,11 +114,22 @@ function createWindow() {
 
   mainWindow = new BrowserWindow(windowOpts);
 
+  mainWindow.on('focus', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.webContents.send('window-active', true);
+  });
+
+  mainWindow.on('blur', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.webContents.send('window-active', false);
+  });
+
   mainWindow.setTitle(title);
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.send('terminal-theme', { bg, fg, baseTitle, userTitle, title });
+    mainWindow.webContents.send('window-active', mainWindow.isFocused());
     setTimeout(() => spawnPty(), 150);
   });
 
