@@ -1,0 +1,37 @@
+{
+  "name": "youyou_terminal",
+  "version": "1.0.0",
+  "description": "Mac 终端程序，支持自定义窗口标题与颜色，可通过命令行参数唤起",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w node-pty",
+    "build": "electron-builder --mac",
+    "build:dir": "electron-builder --mac --dir"
+  },
+  "keywords": ["terminal", "electron", "xterm", "mac"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3",
+    "electron-rebuild": "^3.2.9"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^5.3.0",
+    "node-pty": "^1.0.0"
+  },
+  "build": {
+    "appId": "com.youyou.terminal",
+    "productName": "youyou_terminal",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": ["dmg", "zip"],
+      "entitlements": "build/entitlements.mac.plist",
+      "icon": "assets/terminal-youyou.icns"
+    },
+    "asarUnpack": ["**/node_modules/node-pty/**/*"],
+    "npmRebuild": true
+  }
+}

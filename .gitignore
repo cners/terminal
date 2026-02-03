@@ -1,0 +1,26 @@
+node_modules/
+.pnpm-store/
+dist/
+out/
+build/
+release/
+*.dmg
+*.zip
+.DS_Store
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env
+.env
+.env.*
+!.env.example
+
+# cache/coverage
+.cache/
+.eslintcache
+coverage/
+.nyc_output/
