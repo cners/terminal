@@ -86,8 +86,20 @@ function initDraftPanel() {
   const copyBtn = document.getElementById('draft-copy-btn');
   const textarea = document.getElementById('draft-textarea');
   const resizeHandle = document.getElementById('draft-resize');
+  const toast = document.getElementById('toast');
   if (!btn || !panel || !closeBtn || !copyBtn || !textarea) return;
   const root = document.documentElement;
+  let toastTimer = null;
+
+  const showToast = (msg) => {
+    if (!toast) return;
+    toast.textContent = msg || '已复制';
+    document.body.classList.add('toast-show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      document.body.classList.remove('toast-show');
+    }, 1200);
+  };
 
   const updatePanelHeight = () => {
     const open = document.body.classList.contains('draft-open');
@@ -120,10 +132,12 @@ function initDraftPanel() {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
+      showToast('已复制');
     } catch (_) {
       textarea.select();
       document.execCommand('copy');
       textarea.setSelectionRange(text.length, text.length);
+      showToast('已复制');
     }
   });
 

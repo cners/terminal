@@ -9,7 +9,7 @@
   <style>
     * { box-sizing: border-box; }
     :root { --term-bg: #1e1e1e; --titlebar-h: 36px; --title-suffix-color: #8ad1ff; --titlebar-controls-w: 96px; --titlebar-offset-y: 3px; --draft-panel-h: 0px; --draft-panel-max-h: 0px; }
-    body.draft-open { --draft-panel-max-h: min(300px, calc(100vh - var(--titlebar-h) - var(--titlebar-offset-y) - 16px)); }
+    body.draft-open { --draft-panel-max-h: calc(80vh - var(--titlebar-h) - var(--titlebar-offset-y) - 16px); }
     html, body { margin: 0; height: 100%; overflow: hidden; background: var(--term-bg); }
     #titlebar {
       height: var(--titlebar-h);
@@ -199,6 +199,28 @@
       gap: 8px;
       -webkit-app-region: no-drag;
     }
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%) translateY(8px);
+      background: rgba(20, 22, 28, 0.95);
+      color: #e6edf3;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+      z-index: 999;
+    }
+    body.toast-show #toast {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
     .draft-btn {
       height: 24px;
       padding: 0 10px;
@@ -277,6 +299,7 @@
     <div id="draft-resize" aria-hidden="true"></div>
   </div>
   <div id="terminal-container"></div>
+  <div id="toast" role="status" aria-live="polite">已复制</div>
   <script src="renderer.js"></script>
 </body>
 </html>
