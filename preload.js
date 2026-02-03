@@ -85,6 +85,7 @@ function initDraftPanel() {
   const closeBtn = document.getElementById('draft-close-btn');
   const copyBtn = document.getElementById('draft-copy-btn');
   const textarea = document.getElementById('draft-textarea');
+  const resizeHandle = document.getElementById('draft-resize');
   if (!btn || !panel || !closeBtn || !copyBtn || !textarea) return;
   const root = document.documentElement;
 
@@ -125,6 +126,46 @@ function initDraftPanel() {
       textarea.setSelectionRange(text.length, text.length);
     }
   });
+
+  if (resizeHandle) {
+    let dragging = false;
+    let startY = 0;
+    let startH = 0;
+    const getPx = (value) => Number(String(value || '0').replace('px', '')) || 0;
+    const getMaxTextHeight = () => {
+      const maxPanel = getPx(getComputedStyle(root).getPropertyValue('--draft-panel-max-h'));
+      const header = document.getElementById('draft-panel-header');
+      const headerH = header ? header.getBoundingClientRect().height : 32;
+      const handleH = resizeHandle.getBoundingClientRect().height || 8;
+      if (!maxPanel) return Infinity;
+      return Math.max(80, maxPanel - headerH - handleH - 8);
+    };
+    const getMinTextHeight = () => {
+      const min = getPx(getComputedStyle(textarea).minHeight);
+      return min || textarea.getBoundingClientRect().height;
+    };
+    const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+      if (!document.body.classList.contains('draft-open')) return;
+      dragging = true;
+      startY = e.clientY;
+      startH = textarea.getBoundingClientRect().height;
+      document.body.style.cursor = 'ns-resize';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const delta = e.clientY - startY;
+      const next = clamp(startH + delta, getMinTextHeight(), getMaxTextHeight());
+      textarea.style.height = `${Math.round(next)}px`;
+    });
+    window.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      document.body.style.cursor = '';
+    });
+  }
 
   updatePanelHeight();
 }

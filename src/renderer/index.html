@@ -184,6 +184,7 @@
       transition: max-height 180ms ease, opacity 180ms ease;
       opacity: 0;
       pointer-events: none;
+      position: relative;
     }
     body.draft-open #draft-panel {
       opacity: 1;
@@ -230,6 +231,19 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       -webkit-app-region: no-drag;
     }
+    #draft-resize {
+      height: 8px;
+      cursor: ns-resize;
+      background: rgba(255, 255, 255, 0.06);
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      transition: background 120ms ease;
+      -webkit-app-region: no-drag;
+    }
+    #draft-resize:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
     #terminal-container { width: 100%; height: calc(100% - var(--titlebar-h) - var(--titlebar-offset-y) - var(--draft-panel-h)); padding: 8px; }
   </style>
 </head>
@@ -260,6 +274,7 @@
       <button id="draft-close-btn" class="draft-btn" type="button">关闭</button>
     </div>
     <textarea id="draft-textarea" rows="5" placeholder="在这里写提示词草稿..."></textarea>
+    <div id="draft-resize" aria-hidden="true"></div>
   </div>
   <div id="terminal-container"></div>
   <script src="renderer.js"></script>
