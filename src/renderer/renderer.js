@@ -32,6 +32,18 @@ function applyThemeVars(theme) {
   if (suffixEl) suffixEl.textContent = userTitle;
 }
 
+function initTitlebarControls() {
+  const input = document.getElementById('titlebar-color');
+  if (!input) return;
+  const root = document.documentElement;
+  const current = getComputedStyle(root).getPropertyValue('--title-suffix-color').trim();
+  if (current) input.value = current;
+  input.addEventListener('input', (e) => {
+    const value = e.target.value;
+    if (value) root.style.setProperty('--title-suffix-color', value);
+  });
+}
+
 const container = document.getElementById('terminal-container');
 container.textContent = ''; // 清掉「加载中…」
 
@@ -71,6 +83,8 @@ try {
       foreground: theme.fg,
     };
   });
+
+  initTitlebarControls();
 
   window.terminal.onWindowActive?.((active) => {
     document.body.classList.toggle('window-inactive', !active);

@@ -8,13 +8,12 @@
   <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
   <style>
     * { box-sizing: border-box; }
-    :root { --term-bg: #1e1e1e; --titlebar-h: 32px; }
+    :root { --term-bg: #1e1e1e; --titlebar-h: 32px; --title-suffix-color: #8ad1ff; --titlebar-controls-w: 48px; }
     html, body { margin: 0; height: 100%; overflow: hidden; background: var(--term-bg); }
     body.window-inactive { --titlebar-h: 48px; }
     #titlebar {
       height: var(--titlebar-h);
       background: var(--term-bg);
-      -webkit-app-region: drag;
       display: flex;
       align-items: center;
       justify-content: flex-start;
@@ -24,6 +23,25 @@
       font-size: 12px;
       letter-spacing: 0.2px;
       user-select: none;
+      position: relative;
+    }
+    #titlebar-drag {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      right: var(--titlebar-controls-w);
+      -webkit-app-region: drag;
+      z-index: 0;
+    }
+    #titlebar-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
     }
     #titlebar-title {
       display: flex;
@@ -37,7 +55,7 @@
       max-width: 100%;
     }
     #titlebar-title-suffix {
-      color: #8ad1ff;
+      color: var(--title-suffix-color);
       margin-left: 6px;
       display: inline-block;
       transform-origin: left center;
@@ -49,14 +67,42 @@
     .window-inactive #titlebar-title-suffix {
       font-size: 36px;
     }
+    #titlebar-controls {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+      pointer-events: auto;
+      min-width: var(--titlebar-controls-w);
+      justify-content: flex-end;
+    }
+    #titlebar-color {
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      background: transparent;
+      -webkit-app-region: no-drag;
+      pointer-events: auto;
+    }
+    #titlebar-color::-webkit-color-swatch-wrapper { padding: 0; }
+    #titlebar-color::-webkit-color-swatch { border: none; border-radius: 3px; }
     #terminal-container { width: 100%; height: calc(100% - var(--titlebar-h)); padding: 8px; }
   </style>
 </head>
 <body>
   <div id="titlebar">
-    <div id="titlebar-title">
-      <span id="titlebar-title-base">柚柚来喽~</span>
-      <span id="titlebar-title-suffix"></span>
+    <div id="titlebar-drag"></div>
+    <div id="titlebar-content">
+      <div id="titlebar-title">
+        <span id="titlebar-title-base">柚柚来喽~</span>
+        <span id="titlebar-title-suffix"></span>
+      </div>
+      <div id="titlebar-controls">
+        <input id="titlebar-color" type="color" aria-label="标题颜色" title="标题颜色" />
+      </div>
     </div>
   </div>
   <div id="terminal-container"></div>

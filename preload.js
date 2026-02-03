@@ -42,6 +42,18 @@ function applyThemeVars(theme) {
   if (suffixEl) suffixEl.textContent = userTitle;
 }
 
+function initTitlebarControls() {
+  const input = document.getElementById('titlebar-color');
+  if (!input) return;
+  const root = document.documentElement;
+  const current = getComputedStyle(root).getPropertyValue('--title-suffix-color').trim();
+  if (current) input.value = current;
+  input.addEventListener('input', (e) => {
+    const value = e.target.value;
+    if (value) root.style.setProperty('--title-suffix-color', value);
+  });
+}
+
 function showError(msg) {
   const el = document.getElementById('terminal-container');
   if (el) {
@@ -142,9 +154,11 @@ function injectXtermCss() {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     injectXtermCss();
+    initTitlebarControls();
     initTerminal();
   });
 } else {
   injectXtermCss();
+  initTitlebarControls();
   initTerminal();
 }
