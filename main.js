@@ -79,6 +79,10 @@ function createWindow(argv) {
   const { baseTitle, userTitle, bg, fg } = parseArgv(argv);
   const title = buildWindowTitle(baseTitle, userTitle);
   const isMac = process.platform === 'darwin';
+  const titlebarHeight = 36;
+  const titlebarOffsetY = 3;
+  const trafficLightSize = 12;
+  const trafficLightY = Math.round(titlebarOffsetY + (titlebarHeight - trafficLightSize) / 2);
 
   if (isMac && !app.isPackaged) {
     const iconPath = path.join(__dirname, 'assets', 'terminal-youyou.png');
@@ -99,7 +103,7 @@ function createWindow(argv) {
 
   if (isMac) {
     windowOpts.titleBarStyle = 'hiddenInset';
-    windowOpts.trafficLightPosition = { x: 14, y: 12 };
+    windowOpts.trafficLightPosition = { x: 14, y: trafficLightY };
   }
 
   const win = new BrowserWindow(windowOpts);

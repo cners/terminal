@@ -8,9 +8,8 @@
   <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
   <style>
     * { box-sizing: border-box; }
-    :root { --term-bg: #1e1e1e; --titlebar-h: 32px; --title-suffix-color: #8ad1ff; --titlebar-controls-w: 48px; --titlebar-offset-y: 3px; }
+    :root { --term-bg: #1e1e1e; --titlebar-h: 36px; --title-suffix-color: #8ad1ff; --titlebar-controls-w: 48px; --titlebar-offset-y: 3px; }
     html, body { margin: 0; height: 100%; overflow: hidden; background: var(--term-bg); }
-    body.window-inactive { --titlebar-h: 48px; }
     #titlebar {
       height: var(--titlebar-h);
       margin-top: var(--titlebar-offset-y);
@@ -66,7 +65,7 @@
       margin-left: 0;
     }
     .window-inactive #titlebar-title-suffix {
-      font-size: 36px;
+      font-size: 18px;
     }
     #titlebar-controls {
       margin-left: auto;
@@ -90,11 +89,50 @@
       transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
       -webkit-app-region: no-drag;
       pointer-events: auto;
+      position: relative;
     }
     #titlebar-color-wrap:hover {
       background: rgba(255, 255, 255, 0.18);
       border-color: rgba(255, 255, 255, 0.45);
       box-shadow: 0 0 0 2px rgba(138, 209, 255, 0.25);
+    }
+    #titlebar-color-wrap::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      top: 34px;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: #2b2b2b;
+      color: #d9d9d9;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    #titlebar-color-wrap::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      background: #2b2b2b;
+      transform: translateX(-50%) rotate(45deg);
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 140ms ease;
+      pointer-events: none;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+    #titlebar-color-wrap:hover::after,
+    #titlebar-color-wrap:hover::before {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
     #titlebar-color {
       width: 18px;
@@ -120,8 +158,8 @@
         <span id="titlebar-title-suffix"></span>
       </div>
       <div id="titlebar-controls">
-        <label id="titlebar-color-wrap" title="调整颜色" aria-label="调整颜色">
-          <input id="titlebar-color" type="color" aria-label="调整颜色" title="调整颜色" />
+        <label id="titlebar-color-wrap" data-tooltip="调整颜色" aria-label="调整颜色">
+          <input id="titlebar-color" type="color" aria-label="调整颜色" />
         </label>
       </div>
     </div>
