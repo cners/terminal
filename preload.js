@@ -22,6 +22,7 @@ const terminalAPI = {
   sendInput: (data) => ipcRenderer.send('terminal-input', data),
   sendResize: (cols, rows) => ipcRenderer.send('terminal-resize', { cols, rows }),
   setTitle: (title) => ipcRenderer.send('terminal-set-title', title),
+  openNewWindow: (argv) => ipcRenderer.send('window-new', argv),
   getTheme: () => ipcRenderer.invoke('terminal-get-theme'),
 };
 
@@ -42,6 +43,7 @@ function applyThemeVars(theme) {
   if (baseEl) baseEl.textContent = baseTitle;
   if (suffixEl) suffixEl.textContent = userTitle;
   applySavedTitleColor(userTitle);
+  applySavedDraftText();
 }
 
 let currentTitleKey = null;
@@ -64,6 +66,60 @@ function applySavedTitleColor(userTitle) {
 function saveTitleColor(value) {
   if (!currentTitleKey) return;
   localStorage.setItem(`title-color:${currentTitleKey}`, value);
+}
+
+function getDraftKey() {
+  return currentTitleKey ? `draft-current:${currentTitleKey}` : null;
+}
+
+function getDraftArchiveKey() {
+  return currentTitleKey ? `draft-archive:${currentTitleKey}` : null;
+}
+
+function loadDraftArchive() {
+  const key = getDraftArchiveKey();
+  if (!key) return [];
+  try {
+    const raw = localStorage.getItem(key);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter((item) => item && typeof item.text === 'string') : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function applySavedDraftText() {
+  const textarea = document.getElementById('draft-textarea');
+  const key = getDraftKey();
+  if (!textarea || !key) return;
+  const saved = localStorage.getItem(key);
+  if (saved !== null) {
+    textarea.value = saved;
+    return;
+  }
+  const archive = loadDraftArchive();
+  if (archive.length > 0) {
+    textarea.value = archive[archive.length - 1].text || '';
+  }
+}
+
+function saveDraftText(value) {
+  const key = getDraftKey();
+  if (!key) return;
+  localStorage.setItem(key, value || '');
+}
+
+function archiveDraftText(value) {
+  const key = getDraftArchiveKey();
+  if (!key) return;
+  const text = (value || '').trim();
+  if (!text) return;
+  const list = loadDraftArchive();
+  list.push({ ts: Date.now(), text });
+  if (list.length > 50) list.splice(0, list.length - 50);
+  try {
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch (_) {}
 }
 
 function initTitlebarControls() {
@@ -100,6 +156,10 @@ function initDraftPanel() {
       document.body.classList.remove('toast-show');
     }, 1200);
   };
+  const updateCopyVisibility = () => {
+    const hasText = (textarea.value || '').trim().length > 0;
+    copyBtn.style.display = hasText ? 'inline-flex' : 'none';
+  };
 
   const updatePanelHeight = () => {
     const open = document.body.classList.contains('draft-open');
@@ -112,11 +172,15 @@ function initDraftPanel() {
   const openPanel = () => {
     document.body.classList.add('draft-open');
     requestAnimationFrame(() => {
+      applySavedDraftText();
       updatePanelHeight();
+      updateCopyVisibility();
       textarea.focus();
     });
   };
   const closePanel = () => {
+    archiveDraftText(textarea.value);
+    saveDraftText(textarea.value);
     document.body.classList.remove('draft-open');
     updatePanelHeight();
   };
@@ -127,6 +191,10 @@ function initDraftPanel() {
 
   btn.addEventListener('click', togglePanel);
   closeBtn.addEventListener('click', closePanel);
+  textarea.addEventListener('input', () => {
+    saveDraftText(textarea.value);
+    updateCopyVisibility();
+  });
   copyBtn.addEventListener('click', async () => {
     const text = textarea.value || '';
     if (!text) return;
@@ -182,6 +250,14 @@ function initDraftPanel() {
   }
 
   updatePanelHeight();
+  applySavedDraftText();
+  updateCopyVisibility();
+}
+
+function initWindowControls() {
+  const btn = document.getElementById('titlebar-new-btn');
+  if (!btn || !window.terminal?.openNewWindow) return;
+  btn.addEventListener('click', () => window.terminal.openNewWindow());
 }
 
 function showError(msg) {
@@ -286,11 +362,13 @@ if (document.readyState === 'loading') {
     injectXtermCss();
     initTitlebarControls();
     initDraftPanel();
+    initWindowControls();
     initTerminal();
   });
 } else {
   injectXtermCss();
   initTitlebarControls();
   initDraftPanel();
+  initWindowControls();
   initTerminal();
 }

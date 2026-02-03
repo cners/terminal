@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
   <style>
     * { box-sizing: border-box; }
-    :root { --term-bg: #1e1e1e; --titlebar-h: 36px; --title-suffix-color: #8ad1ff; --titlebar-controls-w: 96px; --titlebar-offset-y: 3px; --draft-panel-h: 0px; --draft-panel-max-h: 0px; }
+    :root { --term-bg: #1e1e1e; --titlebar-h: 36px; --title-suffix-color: #8ad1ff; --titlebar-controls-w: 128px; --titlebar-offset-y: 3px; --draft-panel-h: 0px; --draft-panel-max-h: 0px; }
     body.draft-open { --draft-panel-max-h: calc(80vh - var(--titlebar-h) - var(--titlebar-offset-y) - 16px); }
     html, body { margin: 0; height: 100%; overflow: hidden; background: var(--term-bg); }
     #titlebar {
@@ -101,6 +101,83 @@
       color: #ffffff;
     }
     #titlebar-draft-btn svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+    #titlebar-draft-btn::after,
+    #titlebar-new-btn::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      top: 34px;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: #2b2b2b;
+      color: #d9d9d9;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 140ms ease, transform 140ms ease;
+      z-index: 3;
+    }
+    #titlebar-draft-btn::before,
+    #titlebar-new-btn::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      background: #2b2b2b;
+      transform: translateX(-50%) rotate(45deg);
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 140ms ease;
+      pointer-events: none;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      z-index: 2;
+    }
+    #titlebar-draft-btn:hover::after,
+    #titlebar-draft-btn:hover::before,
+    #titlebar-new-btn:hover::after,
+    #titlebar-new-btn:hover::before,
+    #titlebar-color-wrap:hover::after,
+    #titlebar-color-wrap:hover::before {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #titlebar-draft-btn,
+    #titlebar-new-btn {
+      position: relative;
+    }
+    #titlebar-new-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cfd6dd;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, color 140ms ease;
+      -webkit-app-region: no-drag;
+      pointer-events: auto;
+    }
+    #titlebar-new-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.45);
+      box-shadow: 0 0 0 2px rgba(138, 209, 255, 0.25);
+      color: #ffffff;
+    }
+    #titlebar-new-btn svg {
       width: 16px;
       height: 16px;
       display: block;
@@ -222,20 +299,29 @@
       transform: translateX(-50%) translateY(0);
     }
     .draft-btn {
-      height: 24px;
-      padding: 0 10px;
+      width: 28px;
+      height: 28px;
+      padding: 0;
       border-radius: 6px;
       border: 1px solid rgba(255, 255, 255, 0.15);
       background: rgba(255, 255, 255, 0.08);
       color: #d5dbe2;
-      font-size: 12px;
       cursor: pointer;
-      transition: background 140ms ease, border-color 140ms ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
       -webkit-app-region: no-drag;
     }
     .draft-btn:hover {
       background: rgba(255, 255, 255, 0.18);
       border-color: rgba(255, 255, 255, 0.45);
+      color: #ffffff;
+    }
+    .draft-btn svg {
+      width: 16px;
+      height: 16px;
+      display: block;
     }
     #draft-textarea {
       width: 100%;
@@ -281,10 +367,17 @@
         <label id="titlebar-color-wrap" data-tooltip="调整颜色" aria-label="调整颜色">
           <input id="titlebar-color" type="color" aria-label="调整颜色" />
         </label>
-        <button id="titlebar-draft-btn" type="button" aria-label="草稿">
+        <button id="titlebar-draft-btn" type="button" aria-label="草稿" data-tooltip="草稿">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4 19h4l9-9-4-4-9 9v4z"></path>
             <path d="M13 6l4 4"></path>
+          </svg>
+        </button>
+        <button id="titlebar-new-btn" type="button" aria-label="新窗口" data-tooltip="新窗口">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="5" width="14" height="12" rx="2"></rect>
+            <path d="M19 9h2"></path>
+            <path d="M20 8v2"></path>
           </svg>
         </button>
       </div>
@@ -292,8 +385,18 @@
   </div>
   <div id="draft-panel">
     <div id="draft-panel-header">
-      <button id="draft-copy-btn" class="draft-btn" type="button">复制</button>
-      <button id="draft-close-btn" class="draft-btn" type="button">关闭</button>
+      <button id="draft-copy-btn" class="draft-btn" type="button" aria-label="复制">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+          <rect x="4" y="4" width="11" height="11" rx="2"></rect>
+        </svg>
+      </button>
+      <button id="draft-close-btn" class="draft-btn" type="button" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 6l12 12"></path>
+          <path d="M18 6l-12 12"></path>
+        </svg>
+      </button>
     </div>
     <textarea id="draft-textarea" rows="5" placeholder="在这里写提示词草稿..."></textarea>
     <div id="draft-resize" aria-hidden="true"></div>

@@ -204,7 +204,15 @@ if (!gotLock) {
     win.show();
     win.focus();
   });
-  app.whenReady().then(() => createWindow());
+app.whenReady().then(() => {
+  app.setAboutPanelOptions({
+    applicationName: app.getName(),
+    applicationVersion: app.getVersion(),
+    version: app.getVersion(),
+    credits: '技术支持：壮壮\n联系方式：liuzhuangs@hotmail.com',
+  });
+  createWindow();
+});
 }
 
 app.on('window-all-closed', () => app.quit());
@@ -238,4 +246,12 @@ ipcMain.handle('terminal-get-theme', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return parseArgv();
   return windowThemes.get(win.id) || parseArgv();
+});
+
+ipcMain.on('window-new', (_, argv) => {
+  const win = createWindow(argv);
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
 });

@@ -1,5 +1,5 @@
 {
-  "name": "youyou_terminal",
+  "name": "Youyou",
   "version": "1.0.0",
   "description": "Mac 终端程序，支持自定义窗口标题与颜色，可通过命令行参数唤起",
   "main": "main.js",
