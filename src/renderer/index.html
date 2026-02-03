@@ -77,6 +77,24 @@
       min-width: var(--titlebar-controls-w);
       justify-content: flex-end;
     }
+    #titlebar-color-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+      -webkit-app-region: no-drag;
+      pointer-events: auto;
+    }
+    #titlebar-color-wrap:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.45);
+      box-shadow: 0 0 0 2px rgba(138, 209, 255, 0.25);
+    }
     #titlebar-color {
       width: 18px;
       height: 18px;
@@ -101,7 +119,9 @@
         <span id="titlebar-title-suffix"></span>
       </div>
       <div id="titlebar-controls">
-        <input id="titlebar-color" type="color" aria-label="标题颜色" title="标题颜色" />
+        <label id="titlebar-color-wrap" title="调整颜色" aria-label="调整颜色">
+          <input id="titlebar-color" type="color" aria-label="调整颜色" title="调整颜色" />
+        </label>
       </div>
     </div>
   </div>

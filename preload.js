@@ -4,6 +4,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const terminalAPI = {
   onData: (cb) => {
@@ -40,6 +41,29 @@ function applyThemeVars(theme) {
   const suffixEl = document.getElementById('titlebar-title-suffix');
   if (baseEl) baseEl.textContent = baseTitle;
   if (suffixEl) suffixEl.textContent = userTitle;
+  applySavedTitleColor(userTitle);
+}
+
+let currentTitleKey = null;
+function computeTitleKey(userTitle) {
+  const title = (userTitle || '').trim();
+  if (!title) return null;
+  return crypto.createHash('md5').update(title).digest('hex');
+}
+
+function applySavedTitleColor(userTitle) {
+  currentTitleKey = computeTitleKey(userTitle);
+  if (!currentTitleKey) return;
+  const saved = localStorage.getItem(`title-color:${currentTitleKey}`);
+  if (!saved) return;
+  document.documentElement.style.setProperty('--title-suffix-color', saved);
+  const input = document.getElementById('titlebar-color');
+  if (input) input.value = saved;
+}
+
+function saveTitleColor(value) {
+  if (!currentTitleKey) return;
+  localStorage.setItem(`title-color:${currentTitleKey}`, value);
 }
 
 function initTitlebarControls() {
@@ -51,6 +75,7 @@ function initTitlebarControls() {
   input.addEventListener('input', (e) => {
     const value = e.target.value;
     if (value) root.style.setProperty('--title-suffix-color', value);
+    if (value) saveTitleColor(value);
   });
 }
 
