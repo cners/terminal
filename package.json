@@ -24,7 +24,7 @@
   },
   "build": {
     "appId": "com.youyou.terminal",
-    "productName": "youyou_terminal",
+    "productName": "Youyou",
     "mac": {
       "category": "public.app-category.utilities",
       "target": ["dmg", "zip"],

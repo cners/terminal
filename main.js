@@ -13,10 +13,15 @@ let ptyProcess = null;
 /** 从 argv 解析用户传入的 --key value 参数（Electron 会追加很多参数，我们只取 --title/--bg/--fg） */
 function parseArgv(argv) {
   const args = Array.isArray(argv) ? argv : process.argv;
-  const out = { title: '柚柚来喽~', bg: '#1e1e1e', fg: '#cccccc' };
+  const out = {
+    baseTitle: '柚柚来喽~',
+    userTitle: '',
+    bg: '#1e1e1e',
+    fg: '#cccccc',
+  };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--title' && args[i + 1]) {
-      out.title = args[i + 1];
+      out.userTitle = args[i + 1];
       i++;
     } else if (args[i] === '--bg' && args[i + 1]) {
       out.bg = args[i + 1];
@@ -27,6 +32,11 @@ function parseArgv(argv) {
     }
   }
   return out;
+}
+
+function buildWindowTitle(baseTitle, userTitle) {
+  const suffix = (userTitle || '').trim();
+  return suffix ? `${baseTitle} ${suffix}` : baseTitle;
 }
 
 /** 返回首个存在的 shell 路径，避免 posix_spawnp 因路径无效失败 */
@@ -65,17 +75,19 @@ function getPtyEnv() {
 }
 
 function applyArgs(argv) {
-  const { title, bg, fg } = parseArgv(argv);
+  const { baseTitle, userTitle, bg, fg } = parseArgv(argv);
+  const title = buildWindowTitle(baseTitle, userTitle);
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.setTitle(title);
     mainWindow.setBackgroundColor(bg);
-    mainWindow.webContents.send('terminal-theme', { bg, fg, title });
+    mainWindow.webContents.send('terminal-theme', { bg, fg, baseTitle, userTitle, title });
   }
-  return { title, bg, fg };
+  return { baseTitle, userTitle, bg, fg };
 }
 
 function createWindow() {
-  const { title, bg, fg } = parseArgv();
+  const { baseTitle, userTitle, bg, fg } = parseArgv();
+  const title = buildWindowTitle(baseTitle, userTitle);
   const isMac = process.platform === 'darwin';
 
   if (isMac && !app.isPackaged) {
@@ -106,7 +118,7 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.webContents.send('terminal-theme', { bg, fg, title });
+    mainWindow.webContents.send('terminal-theme', { bg, fg, baseTitle, userTitle, title });
     setTimeout(() => spawnPty(), 150);
   });
 

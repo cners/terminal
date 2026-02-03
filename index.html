@@ -25,17 +25,34 @@
       user-select: none;
     }
     #titlebar-title {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      line-height: 1;
+      transform: translateY(3px);
       pointer-events: none;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
     }
+    #titlebar-title-suffix {
+      color: #8ad1ff;
+      margin-left: 6px;
+    }
+    #titlebar-title-suffix:empty {
+      margin-left: 0;
+    }
     #terminal-container { width: 100%; height: calc(100% - 32px); min-height: 200px; padding: 8px; }
   </style>
 </head>
 <body>
-  <div id="titlebar"><div id="titlebar-title">柚柚来喽~</div></div>
+  <div id="titlebar">
+    <div id="titlebar-title">
+      <span id="titlebar-title-base">柚柚来喽~</span>
+      <span id="titlebar-title-suffix"></span>
+    </div>
+  </div>
   <div id="terminal-container">加载中…</div>
 </body>
 </html>

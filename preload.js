@@ -31,9 +31,12 @@ function applyThemeVars(theme) {
     document.documentElement.style.setProperty('--term-bg', bg);
     document.body.style.background = bg;
   }
-  const title = theme.title || '柚柚来喽~';
-  const titleEl = document.getElementById('titlebar-title');
-  if (titleEl) titleEl.textContent = title;
+  const baseTitle = theme.baseTitle || '柚柚来喽~';
+  const userTitle = (theme.userTitle || '').trim();
+  const baseEl = document.getElementById('titlebar-title-base');
+  const suffixEl = document.getElementById('titlebar-title-suffix');
+  if (baseEl) baseEl.textContent = baseTitle;
+  if (suffixEl) suffixEl.textContent = userTitle;
 }
 
 function showError(msg) {
