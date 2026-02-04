@@ -11,7 +11,7 @@ const windows = new Map();
 const ptys = new Map();
 const windowThemes = new Map();
 
-/** 从 argv 解析用户传入的 --key value 参数（Electron 会追加很多参数，我们只取 --title/--bg/--fg） */
+/** 从 argv 解析用户传入的 --key value 参数（Electron 会追加很多参数，我们只取 --title/--bg/--fg/--bash） */
 function parseArgv(argv) {
   const args = Array.isArray(argv) ? argv : process.argv;
   const out = {
@@ -19,6 +19,20 @@ function parseArgv(argv) {
     userTitle: '',
     bg: '#1e1e1e',
     fg: '#cccccc',
+    bashLines: [],
+  };
+  const decodeBashArg = (value) => {
+    if (!value) return '';
+    return value
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t');
+  };
+  const pushBash = (value) => {
+    const decoded = decodeBashArg(value);
+    if (!decoded) return;
+    const lines = decoded.split('\n').map((l) => l.replace(/\r/g, '')).filter((l) => l.length > 0);
+    out.bashLines.push(...lines);
   };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--title' && args[i + 1]) {
@@ -29,6 +43,9 @@ function parseArgv(argv) {
       i++;
     } else if (args[i] === '--fg' && args[i + 1]) {
       out.fg = args[i + 1];
+      i++;
+    } else if (args[i] === '--bash' && args[i + 1]) {
+      pushBash(args[i + 1]);
       i++;
     }
   }
@@ -76,7 +93,7 @@ function getPtyEnv() {
 }
 
 function createWindow(argv) {
-  const { baseTitle, userTitle, bg, fg } = parseArgv(argv);
+  const { baseTitle, userTitle, bg, fg, bashLines } = parseArgv(argv);
   const title = buildWindowTitle(baseTitle, userTitle);
   const isMac = process.platform === 'darwin';
   const titlebarHeight = 36;
@@ -126,7 +143,7 @@ function createWindow(argv) {
   win.webContents.on('did-finish-load', () => {
     win.webContents.send('terminal-theme', { bg, fg, baseTitle, userTitle, title });
     win.webContents.send('window-active', win.isFocused());
-    setTimeout(() => spawnPty(win), 150);
+    setTimeout(() => spawnPty(win, { bashLines }), 150);
   });
 
   win.on('closed', () => {
@@ -142,7 +159,7 @@ function createWindow(argv) {
   return win;
 }
 
-function spawnPty(win) {
+function spawnPty(win, options = {}) {
   if (!win || win.isDestroyed()) return;
   const pty = require('node-pty');
   const cols = 80;
@@ -175,12 +192,32 @@ function spawnPty(win) {
   }
   if (!ptyProcess) return;
   ptys.set(win.id, ptyProcess);
+  const bashLines = Array.isArray(options.bashLines) ? options.bashLines.filter(Boolean) : [];
+  let bashSent = false;
+  let bashScheduled = false;
+  const sendBash = () => {
+    if (bashSent || bashLines.length === 0 || !ptyProcess) return;
+    bashSent = true;
+    for (const line of bashLines) {
+      if (line && ptyProcess) ptyProcess.write(line + '\r');
+    }
+  };
+  const scheduleBash = () => {
+    if (bashScheduled || bashSent || bashLines.length === 0) return;
+    bashScheduled = true;
+    setTimeout(sendBash, 160);
+  };
 
   ptyProcess.onData((data) => {
     if (!win.isDestroyed()) {
       win.webContents.send('terminal-data', data);
     }
+    scheduleBash();
   });
+
+  if (bashLines.length > 0) {
+    setTimeout(sendBash, 900);
+  }
 
   ptyProcess.onExit(({ exitCode }) => {
     if (!win.isDestroyed()) {

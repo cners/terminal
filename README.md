@@ -49,6 +49,24 @@ open -a Youyou --args --title "深色终端" --bg "#0d1117" --fg "#c9d1d9"
 | `--title` | 窗口标题 | `--title "后端服务"` |
 | `--bg` | 终端背景色 | `--bg "#1e1e1e"` |
 | `--fg` | 终端前景色 | `--fg "#cccccc"` |
+| `--bash` | 启动后在终端内执行命令（可多次或包含换行） | `--bash "npm i"` |
+
+**执行脚本示例：**
+
+```bash
+# 单行命令
+open -a Youyou --args --bash "agent"
+
+# 多行脚本（方式一：多次 --bash）
+open -a Youyou --args \
+  --bash "cd /Users/me/project" \
+  --bash "export FOO=bar" \
+  --bash "agent"
+
+# 多行脚本（方式二：使用 $'...' 传入换行）
+open -a Youyou --args \
+  --bash $'cd /Users/me/project\nexport FOO=bar\nagent'
+```
 
 ## 在 Shell 内修改窗口标题
 
