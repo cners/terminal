@@ -216,7 +216,7 @@ function spawnPty(win, options = {}) {
   });
 
   if (bashLines.length > 0) {
-    setTimeout(sendBash, 900);
+    setTimeout(sendBash, 100);
   }
 
   ptyProcess.onExit(({ exitCode }) => {
