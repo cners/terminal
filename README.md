@@ -4,6 +4,7 @@ Mac 上的终端程序，功能与系统终端一致（基于 **Electron + xterm
 
 - **自定义窗口标题**：启动时通过参数指定，或在 shell 内用 OSC 序列修改并同步到窗口
 - **自定义颜色**：启动时通过参数指定背景色、前景色
+- **标题栏工具**：标题后缀颜色可调（并按 `--title` 持久化）、草稿面板、快速新窗口
 
 ## 安装与运行
 
@@ -68,6 +69,12 @@ open -a Youyou --args \
   --bash $'cd /Users/me/project\nexport FOO=bar\nagent'
 ```
 
+## 标题栏功能
+
+- **颜色选择器**：调整标题后缀颜色，按 `--title` 分组保存
+- **草稿面板**：点击铅笔图标展开草稿编辑区，支持复制、关闭归档、下边框拖拽高度
+- **新窗口**：点击“新窗口”图标快速打开新窗口
+
 ## 在 Shell 内修改窗口标题
 
 终端已支持 **OSC 标题**：当 shell 或程序输出设置标题的转义序列时，窗口标题会同步更新。例如：
@@ -89,7 +96,7 @@ printf '\033]0;%s\007' "新标题"
 
 ## 技术说明
 
-- **主进程**（`main.js`）：解析 `process.argv` 中的 `--title` / `--bg` / `--fg`，创建 `BrowserWindow` 并设置标题与 `backgroundColor`；使用 `node-pty` 启动系统 shell（`$SHELL` 或 zsh），通过 IPC 与渲染进程收发数据与 resize。
+- **主进程**（`main.js`）：解析 `process.argv` 中的 `--title` / `--bg` / `--fg` / `--bash`，创建 `BrowserWindow` 并设置标题与 `backgroundColor`；使用 `node-pty` 启动系统 shell（`$SHELL` 或 zsh），通过 IPC 与渲染进程收发数据与 resize。
 - **渲染进程**（`src/renderer/renderer.js`）：使用 **xterm.js** + **FitAddon** 渲染终端；接收主进程发来的 PTY 输出、发送用户输入与 resize；监听 xterm 的 `onTitleChange`，将 shell 内设置的标题同步到窗口（`terminal.setTitle`）。
 - **preload**（`preload.js`）：通过 `contextBridge` 暴露 `terminal.*` API，供渲染进程安全调用 IPC。
 
