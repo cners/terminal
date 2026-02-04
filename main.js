@@ -1,5 +1,5 @@
 /**
- * youyou_terminal - Electron 主进程
+ * Youyou - Electron 主进程
  * 功能：与系统终端一致的 PTY 终端；支持 --title / --bg / --fg 命令行参数自定义窗口标题与颜色
  */
 const { app, BrowserWindow, ipcMain } = require('electron');
@@ -47,7 +47,7 @@ function getShell() {
   for (const p of candidates) {
     try {
       if (fs.existsSync(p)) return p;
-    } catch (_) {}
+    } catch (_) { }
   }
   return '/bin/zsh';
 }
@@ -70,7 +70,7 @@ function getPtyEnv() {
   if (process.env.SHELL && process.env.PWD && !app.isPackaged) {
     try {
       return { ...process.env, PWD: cwd };
-    } catch (_) {}
+    } catch (_) { }
   }
   return base;
 }
@@ -204,15 +204,15 @@ if (!gotLock) {
     win.show();
     win.focus();
   });
-app.whenReady().then(() => {
-  app.setAboutPanelOptions({
-    applicationName: app.getName(),
-    applicationVersion: app.getVersion(),
-    version: app.getVersion(),
-    credits: '技术支持：壮壮\n联系方式：liuzhuangs@hotmail.com',
+  app.whenReady().then(() => {
+    app.setAboutPanelOptions({
+      applicationName: app.getName(),
+      applicationVersion: app.getVersion(),
+      version: app.getVersion(),
+      credits: '技术支持：壮壮\n联系方式：liuzhuangs@hotmail.com',
+    });
+    createWindow();
   });
-  createWindow();
-});
 }
 
 app.on('window-all-closed', () => app.quit());

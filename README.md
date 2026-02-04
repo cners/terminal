@@ -1,4 +1,4 @@
-# youyou_terminal
+# Youyou
 
 Mac 上的终端程序，功能与系统终端一致（基于 **Electron + xterm.js + node-pty**，与 VS Code 内置终端同方案）。支持：
 
@@ -28,10 +28,10 @@ pnpm start
 
 ```bash
 # 指定窗口标题
-open -a youyou_terminal --args --title "我的开发终端"
+open -a Youyou --args --title "我的开发终端"
 
 # 指定背景色、前景色（支持 #hex、rgb、颜色名）
-open -a youyou_terminal --args --title "深色终端" --bg "#0d1117" --fg "#c9d1d9"
+open -a Youyou --args --title "深色终端" --bg "#0d1117" --fg "#c9d1d9"
 
 # 打包成 .app 后，用 -a 指定应用名（默认可能是 Electron 或你在 package.json 里配置的 name）
 ```
@@ -39,7 +39,7 @@ open -a youyou_terminal --args --title "深色终端" --bg "#0d1117" --fg "#c9d1
 若直接运行二进制（开发时或打包后的 .app 内容）：
 
 ```bash
-/path/to/youyou_terminal.app/Contents/MacOS/youyou_terminal --title "Dev" --bg "#1a1a2e" --fg "#eaeaea"
+/Applications/Youyou.app/Contents/MacOS/Youyou --title "Dev" --bg "#1a1a2e" --fg "#eaeaea"
 ```
 
 **参数说明：**
