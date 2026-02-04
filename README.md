@@ -34,6 +34,9 @@ open -a Youyou --args --title "我的开发终端"
 # 指定背景色、前景色（支持 #hex、rgb、颜色名）
 open -a Youyou --args --title "深色终端" --bg "#0d1117" --fg "#c9d1d9"
 
+# 打开多个窗口：应用已运行时，macOS 默认只激活现有窗口不传参，需加 -n 强制启动新实例以触发 second-instance
+open -n -a Youyou --args --title "窗口1"
+
 # 打包成 .app 后，用 -a 指定应用名（默认可能是 Electron 或你在 package.json 里配置的 name）
 ```
 

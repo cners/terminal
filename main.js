@@ -11,6 +11,44 @@ const windows = new Map();
 const ptys = new Map();
 const windowThemes = new Map();
 
+const OUR_SWITCHES = ['--title', '--bg', '--fg', '--bash'];
+const CHROMIUM_SWITCH_PREFIXES = ['--allow-', '--original-process-start-time', '--enable', '--disable', '--force', '--no-'];
+
+function isChromiumSwitch(s) {
+  return typeof s === 'string' && s.startsWith('--') && CHROMIUM_SWITCH_PREFIXES.some((p) => s.startsWith(p));
+}
+
+/** Chromium 会重排 argv：所有 --switch 在前，值在后。据此解析（electron#20322 fallback） */
+function parseArgvChromiumReordered(args) {
+  if (!Array.isArray(args) || args.length === 0) return null;
+  const switches = [];
+  const values = [];
+  for (const a of args) {
+    if (typeof a !== 'string') continue;
+    if (OUR_SWITCHES.includes(a)) {
+      switches.push(a);
+    } else if (!a.startsWith('--') && switches.length > 0) {
+      values.push(a);
+    }
+  }
+  if (switches.length === 0 || values.length === 0) return null;
+  const out = { baseTitle: '柚柚来喽~', userTitle: '', bg: '#1e1e1e', fg: '#cccccc', bashLines: [] };
+  const decodeBashArg = (v) => (v || '').replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
+  let vi = 0;
+  for (const sw of switches) {
+    if (vi >= values.length) break;
+    const val = values[vi++];
+    if (sw === '--title') out.userTitle = val;
+    else if (sw === '--bg') out.bg = val;
+    else if (sw === '--fg') out.fg = val;
+    else if (sw === '--bash') {
+      const lines = decodeBashArg(val).split('\n').map((l) => l.replace(/\r/g, '')).filter((l) => l.length > 0);
+      out.bashLines.push(...lines);
+    }
+  }
+  return out;
+}
+
 /** 从 argv 解析用户传入的 --key value 参数（Electron 会追加很多参数，我们只取 --title/--bg/--fg/--bash） */
 function parseArgv(argv) {
   const args = Array.isArray(argv) ? argv : process.argv;
@@ -35,16 +73,16 @@ function parseArgv(argv) {
     out.bashLines.push(...lines);
   };
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--title' && args[i + 1]) {
+    if (args[i] === '--title' && args[i + 1] && !isChromiumSwitch(args[i + 1])) {
       out.userTitle = args[i + 1];
       i++;
-    } else if (args[i] === '--bg' && args[i + 1]) {
+    } else if (args[i] === '--bg' && args[i + 1] && !isChromiumSwitch(args[i + 1])) {
       out.bg = args[i + 1];
       i++;
-    } else if (args[i] === '--fg' && args[i + 1]) {
+    } else if (args[i] === '--fg' && args[i + 1] && !isChromiumSwitch(args[i + 1])) {
       out.fg = args[i + 1];
       i++;
-    } else if (args[i] === '--bash' && args[i + 1]) {
+    } else if (args[i] === '--bash' && args[i + 1] && !isChromiumSwitch(args[i + 1])) {
       pushBash(args[i + 1]);
       i++;
     }
@@ -108,8 +146,11 @@ function getPtyEnv() {
   return base;
 }
 
-function createWindow(argv) {
-  const { baseTitle, userTitle, bg, fg, bashLines } = parseArgv(argv);
+function createWindow(argvOrParsed) {
+  const parsed = Array.isArray(argvOrParsed) || !argvOrParsed?.baseTitle
+    ? parseArgv(argvOrParsed)
+    : argvOrParsed;
+  const { baseTitle, userTitle, bg, fg, bashLines } = parsed;
   const title = buildWindowTitle(baseTitle, userTitle);
   const isMac = process.platform === 'darwin';
   const titlebarHeight = 36;
@@ -246,12 +287,20 @@ function spawnPty(win, options = {}) {
 // 关闭沙箱以便 node-pty 能正常 spawn shell（macOS 下 posix_spawnp 在沙箱内常失败）
 app.commandLine.appendSwitch('no-sandbox');
 
-const gotLock = app.requestSingleInstanceLock();
+// 通过 additionalData 传递原始 argv，避免 Chromium 重排参数导致 --title value 配对错乱（electron#20322）
+const gotLock = app.requestSingleInstanceLock({ argv: process.argv });
 if (!gotLock) {
   app.quit();
 } else {
-  app.on('second-instance', (_, argv) => {
-    const win = createWindow(argv);
+  app.on('second-instance', (_, commandLine, _cwd, additionalData) => {
+    let parsed = null;
+    const argv = (additionalData && Array.isArray(additionalData.argv) && additionalData.argv) || null;
+    if (argv) parsed = parseArgv(argv);
+    // additionalData 在部分环境下未正确传递，fallback 解析 Chromium 重排后的 commandLine
+    if (!parsed || (!parsed.userTitle && parsed.bashLines.length === 0 && parsed.bg === '#1e1e1e')) {
+      parsed = parseArgvChromiumReordered(commandLine || []) || { baseTitle: '柚柚来喽~', userTitle: '', bg: '#1e1e1e', fg: '#cccccc', bashLines: [] };
+    }
+    const win = createWindow(parsed);
     if (!win) return;
     if (win.isMinimized()) win.restore();
     win.show();
