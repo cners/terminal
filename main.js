@@ -76,13 +76,29 @@ function getPtyEnv() {
     return { ...process.env, HOME: process.env.HOME || home };
   }
   const cwd = home || process.cwd();
+  // 常见开发工具路径：Homebrew (Apple Silicon & Intel), Go, Rust, Node (nvm/fnm), Python, etc.
+  const commonPaths = [
+    '/opt/homebrew/bin',           // Homebrew (Apple Silicon)
+    '/opt/homebrew/sbin',
+    '/usr/local/go/bin',           // Go 官方安装路径
+    `${home}/go/bin`,              // Go workspace bin
+    `${home}/.cargo/bin`,          // Rust
+    `${home}/.nvm/versions/node/*/bin`, // nvm (会被 shell 展开)
+    `${home}/.local/bin`,          // pipx, poetry 等
+    '/usr/local/bin',
+    '/usr/bin',
+    '/bin',
+    '/usr/sbin',
+    '/sbin',
+  ].join(':');
   const base = {
     HOME: home,
     USER: process.env.USER || (os.userInfo && os.userInfo().username) || 'user',
-    PATH: '/usr/local/bin:/usr/bin:/bin',
+    PATH: commonPaths,
     TERM: 'xterm-256color',
     LANG: process.env.LANG || 'en_US.UTF-8',
     PWD: cwd,
+    GOPATH: `${home}/go`,          // Go 默认 GOPATH
   };
   if (process.env.SHELL && process.env.PWD && !app.isPackaged) {
     try {
